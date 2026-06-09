@@ -8,6 +8,7 @@ import com.velocityllm.command.ConsoleCommand;
 import com.velocityllm.config.ConfigManager;
 import com.velocityllm.history.ChatHistoryManager;
 import com.velocityllm.listener.ChatListener;
+import com.velocityllm.listener.DisconnectListener;
 import com.velocityllm.rag.RagService;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -21,8 +22,8 @@ import java.nio.file.Path;
 @Plugin(
         id = "velocity-llm",
         name = "Velocity LLM",
-        version = "1.0.0",
-        description = "Velocity AI assistant with RAG support",
+        version = BuildConstants.VERSION,
+        description = "Velocity Ollama AI assistant with RAG",
         authors = {"Velocity-LLM"}
 )
 public final class VelocityLLMPlugin {
@@ -45,26 +46,36 @@ public final class VelocityLLMPlugin {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
+        configManager = new ConfigManager(dataDirectory, logger);
         try {
-            configManager = new ConfigManager(dataDirectory, logger);
             configManager.load();
             configManager.copyDefaultDocsIfMissing();
-
-            chatHistoryManager = new ChatHistoryManager();
-            EmbeddingService embeddingService = new EmbeddingService();
-            ragService = new RagService(dataDirectory, configManager, embeddingService, logger);
-            ragService.reload();
-
-            AIService aiService = new AIService();
-            chatService = new ChatService(this, aiService, ragService, chatHistoryManager, logger);
-
-            server.getEventManager().register(this, new ChatListener(this, chatService));
-            server.getCommandManager().register(ConsoleCommand.meta(this), new ConsoleCommand(this, chatService, logger));
-
-            logger.info("Velocity LLM 已启用（Velocity 3.5+）。文档片段: {}", ragService.getChunkCount());
         } catch (Exception e) {
-            logger.error("Velocity LLM 启动失败", e);
+            logger.error("配置加载失败，插件无法启动", e);
+            return;
         }
+
+        chatHistoryManager = new ChatHistoryManager();
+        EmbeddingService embeddingService = new EmbeddingService();
+        ragService = new RagService(dataDirectory, configManager, embeddingService, logger);
+
+        try {
+            ragService.reload();
+        } catch (Exception e) {
+            logger.warn("文档加载失败: {}", e.getMessage());
+        }
+
+        AIService aiService = new AIService();
+        chatService = new ChatService(this, aiService, ragService, chatHistoryManager, logger);
+
+        server.getEventManager().register(this, new ChatListener(this, chatService));
+        server.getEventManager().register(this, new DisconnectListener(chatHistoryManager));
+        server.getCommandManager().register(ConsoleCommand.meta(this), new ConsoleCommand(this, chatService, logger));
+
+        String ragStatus = ragService.isIndexReady()
+                ? "就绪 (" + ragService.getChunkCount() + " 片段)"
+                : "不可用";
+        logger.info("Velocity LLM v{} 已启用，RAG: {}", BuildConstants.VERSION, ragStatus);
     }
 
     public ProxyServer getServer() {
@@ -77,6 +88,10 @@ public final class VelocityLLMPlugin {
 
     public ChatHistoryManager getChatHistoryManager() {
         return chatHistoryManager;
+    }
+
+    public RagService getRagService() {
+        return ragService;
     }
 
     public Logger getLogger() {

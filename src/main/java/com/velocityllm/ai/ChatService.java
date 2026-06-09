@@ -54,7 +54,7 @@ public final class ChatService {
             return;
         }
 
-        if (!checkCooldown(player, config)) {
+        if (isOnCooldown(player, config)) {
             return;
         }
 
@@ -70,24 +70,28 @@ public final class ChatService {
                 .schedule();
     }
 
-    private boolean checkCooldown(Player player, PluginConfig config) {
+    private boolean isOnCooldown(Player player, PluginConfig config) {
         if (config.getCooldownSeconds() <= 0) {
+            return false;
+        }
+
+        Long last = cooldowns.get(player.getUniqueId());
+        if (last == null) {
+            return false;
+        }
+
+        long remaining = config.getCooldownSeconds() - (System.currentTimeMillis() - last) / 1000;
+        if (remaining > 0) {
+            player.sendMessage(MessageUtil.format(config.getMessageCooldown(), "seconds", String.valueOf(remaining)));
             return true;
         }
+        return false;
+    }
 
-        long now = System.currentTimeMillis();
-        Long last = cooldowns.get(player.getUniqueId());
-        if (last != null) {
-            long elapsed = (now - last) / 1000;
-            long remaining = config.getCooldownSeconds() - elapsed;
-            if (remaining > 0) {
-                player.sendMessage(MessageUtil.format(config.getMessageCooldown(), "seconds", String.valueOf(remaining)));
-                return false;
-            }
+    private void markCooldown(UUID playerId, PluginConfig config) {
+        if (config.getCooldownSeconds() > 0) {
+            cooldowns.put(playerId, System.currentTimeMillis());
         }
-
-        cooldowns.put(player.getUniqueId(), now);
-        return true;
     }
 
     private void processAsync(Player player, String message) {
@@ -100,6 +104,7 @@ public final class ChatService {
             String response = aiService.chat(config, history, userContent).join();
             String truncated = TextUtil.truncate(response, config.getMaxResponseLength());
             historyManager.addExchange(playerId, message, truncated);
+            markCooldown(playerId, config);
 
             plugin.getServer().getScheduler()
                     .buildTask(plugin, () -> deliverAiResponse(player, config, truncated))

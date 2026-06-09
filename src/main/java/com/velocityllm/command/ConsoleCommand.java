@@ -48,7 +48,8 @@ public final class ConsoleCommand implements SimpleCommand {
         try {
             plugin.getConfigManager().load();
             int count = chatService.reload();
-            String message = "Velocity LLM 已重新加载，共 " + count + " 个文档片段。";
+            String ragStatus = plugin.getRagService().isIndexReady() ? "RAG 就绪" : "RAG 不可用";
+            String message = "Velocity LLM 已重新加载，" + count + " 个文档片段，" + ragStatus + "。";
             logger.info(message);
             source.sendMessage(Component.text(message));
         } catch (Exception e) {

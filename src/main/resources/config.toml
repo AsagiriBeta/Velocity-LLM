@@ -1,14 +1,10 @@
-# Velocity LLM 配置文件
+# Velocity LLM 配置文件（Ollama）
 
 [ai]
 enabled = true
-# Ollama 服务地址（不含 /api/chat 路径）
 base-url = "http://127.0.0.1:11434"
 model = "llama3"
-api-key = ""
-# API 风格: ollama | openai
-api-style = "ollama"
-# Ollama 下使用 /api/chat（true）或 /api/generate（false）
+# true = /api/chat，false = /api/generate
 use-chat-api = true
 temperature = 0.7
 timeout-seconds = 120
@@ -17,7 +13,6 @@ timeout-seconds = 120
 trigger-enabled = true
 trigger-prefixes = ["@ai", "@bot"]
 cooldown-seconds = 5
-# 保留的对话轮数（多轮 @ai 对话上下文）
 max-history = 3
 
 [rag]
@@ -26,16 +21,12 @@ docs-folder = "docs"
 max-chunks = 3
 chunk-size = 600
 chunk-overlap = 100
-# Ollama embedding 模型（需 ollama pull nomic-embed-text）
 embedding-model = "nomic-embed-text"
-# 余弦相似度阈值（0~1）
 min-score = 0.25
 
 [response]
 max-length = 500
-# 对话可见范围: same-server（同子服所有玩家）| private（仅对话发起者）
 visibility = "same-server"
-# 是否显示玩家发送给 AI 的消息（同子服或私密模式下的对话记录）
 show-player-messages = true
 system-prompt = """你是本 Minecraft 服务器的 AI 向导。请根据提供的【服务器文档】和对话历史回复玩家。
 规则：

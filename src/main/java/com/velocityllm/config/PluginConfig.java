@@ -4,11 +4,6 @@ import java.util.List;
 
 public final class PluginConfig {
 
-    public enum ApiStyle {
-        OLLAMA,
-        OPENAI
-    }
-
     public enum ResponseVisibility {
         PRIVATE,
         SAME_SERVER
@@ -17,8 +12,6 @@ public final class PluginConfig {
     private boolean aiEnabled = true;
     private String baseUrl = "http://127.0.0.1:11434";
     private String model = "llama3";
-    private String apiKey = "";
-    private ApiStyle apiStyle = ApiStyle.OLLAMA;
     private boolean useChatApi = true;
     private double temperature = 0.7;
     private int timeoutSeconds = 120;
@@ -70,22 +63,6 @@ public final class PluginConfig {
 
     public void setModel(String model) {
         this.model = model;
-    }
-
-    public String getApiKey() {
-        return apiKey;
-    }
-
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    public ApiStyle getApiStyle() {
-        return apiStyle;
-    }
-
-    public void setApiStyle(ApiStyle apiStyle) {
-        this.apiStyle = apiStyle;
     }
 
     public boolean isUseChatApi() {

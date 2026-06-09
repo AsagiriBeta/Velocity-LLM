@@ -39,20 +39,14 @@ public final class EmbeddingService {
                 body.put("model", config.getEmbeddingModel());
                 body.put("input", texts.size() == 1 ? texts.getFirst() : texts);
 
-                HttpRequest.Builder builder = HttpRequest.newBuilder()
+                HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(OllamaUrls.embeddings(config.getBaseUrl())))
                         .timeout(Duration.ofSeconds(config.getTimeoutSeconds()))
                         .header("Content-Type", "application/json")
-                        .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(body)));
+                        .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(body)))
+                        .build();
 
-                if (config.getApiKey() != null && !config.getApiKey().isBlank()) {
-                    builder.header("Authorization", "Bearer " + config.getApiKey());
-                }
-
-                HttpResponse<String> response = httpClient.send(
-                        builder.build(),
-                        HttpResponse.BodyHandlers.ofString()
-                );
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
                 if (response.statusCode() != 200) {
                     throw new IllegalStateException("HTTP " + response.statusCode() + ": " + response.body());

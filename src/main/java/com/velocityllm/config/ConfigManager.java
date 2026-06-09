@@ -53,8 +53,6 @@ public final class ConfigManager {
             loaded.setAiEnabled(ai.getBoolean("enabled", loaded::isAiEnabled));
             loaded.setBaseUrl(resolveBaseUrl(ai, loaded.getBaseUrl()));
             loaded.setModel(ai.getString("model", loaded::getModel));
-            loaded.setApiKey(ai.getString("api-key", loaded::getApiKey));
-            loaded.setApiStyle(parseApiStyle(ai.getString("api-style"), loaded.getApiStyle()));
             loaded.setUseChatApi(resolveUseChatApi(ai, loaded.isUseChatApi()));
             loaded.setTemperature(ai.getDouble("temperature", loaded::getTemperature));
             loaded.setTimeoutSeconds((int) ai.getLong("timeout-seconds", loaded::getTimeoutSeconds));
@@ -98,10 +96,7 @@ public final class ConfigManager {
         }
 
         this.config = loaded;
-        logger.info("配置已加载: model={}, api={}, rag={}",
-                loaded.getModel(),
-                loaded.getApiStyle(),
-                loaded.isRagEnabled());
+        logger.info("配置已加载: model={}, rag={}", loaded.getModel(), loaded.isRagEnabled());
     }
 
     private String resolveBaseUrl(TomlTable ai, String defaultValue) {
@@ -122,27 +117,14 @@ public final class ConfigManager {
         if (ai.contains("use-chat-api")) {
             return ai.getBoolean("use-chat-api");
         }
-
         if (ai.contains("messages-format")) {
             return ai.getBoolean("messages-format");
         }
-
         String legacyApiUrl = ai.getString("api-url");
         if (legacyApiUrl != null) {
             return legacyApiUrl.contains("/api/chat");
         }
-
         return defaultValue;
-    }
-
-    private PluginConfig.ApiStyle parseApiStyle(String value, PluginConfig.ApiStyle defaultValue) {
-        if (value == null || value.isBlank()) {
-            return defaultValue;
-        }
-        return switch (value.toLowerCase(Locale.ROOT)) {
-            case "openai" -> PluginConfig.ApiStyle.OPENAI;
-            default -> PluginConfig.ApiStyle.OLLAMA;
-        };
     }
 
     private boolean resolveShowPlayerMessages(TomlTable response, boolean defaultValue) {

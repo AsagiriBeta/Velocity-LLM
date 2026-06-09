@@ -18,6 +18,8 @@ public final class RagService {
     private final ConfigManager configManager;
     private final Logger logger;
 
+    private boolean indexReady;
+
     public RagService(
             Path dataDirectory,
             ConfigManager configManager,
@@ -33,14 +35,21 @@ public final class RagService {
 
     public int reload() throws IOException {
         int chunkCount = documentStore.reload();
-        PluginConfig config = configManager.getConfig();
+        indexReady = false;
 
+        PluginConfig config = configManager.getConfig();
         if (!config.isRagEnabled() || chunkCount == 0) {
             return chunkCount;
         }
 
-        buildEmbeddingIndex(config);
-        logger.info("RAG 已加载 {} 个片段 ({})", chunkCount, config.getEmbeddingModel());
+        try {
+            buildEmbeddingIndex(config);
+            indexReady = true;
+            logger.info("RAG 索引就绪: {} 个片段 ({})", chunkCount, config.getEmbeddingModel());
+        } catch (Exception e) {
+            logger.error("RAG 索引构建失败，AI 对话仍可用但暂无文档检索: {}", e.getMessage());
+        }
+
         return chunkCount;
     }
 
@@ -60,7 +69,7 @@ public final class RagService {
 
     public List<DocumentChunk> retrieve(String query) {
         PluginConfig config = configManager.getConfig();
-        if (!config.isRagEnabled()) {
+        if (!config.isRagEnabled() || !indexReady) {
             return List.of();
         }
 
@@ -86,6 +95,10 @@ public final class RagService {
             result.add(item.chunk());
         }
         return result;
+    }
+
+    public boolean isIndexReady() {
+        return indexReady;
     }
 
     public boolean isEmpty() {
