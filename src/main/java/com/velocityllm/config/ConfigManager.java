@@ -86,7 +86,7 @@ public final class ConfigManager {
             loaded.setMaxResponseLength((int) response.getLong("max-length", loaded::getMaxResponseLength));
             loaded.setSystemPrompt(response.getString("system-prompt", loaded::getSystemPrompt));
             loaded.setResponseVisibility(parseResponseVisibility(response.getString("visibility"), loaded.getResponseVisibility()));
-            loaded.setShowQuestion(response.getBoolean("show-question", loaded::isShowQuestion));
+            loaded.setShowPlayerMessages(resolveShowPlayerMessages(response, loaded.isShowPlayerMessages()));
         }
 
         TomlTable messages = parsed.getTable("messages");
@@ -94,7 +94,7 @@ public final class ConfigManager {
             loaded.setMessagePrefix(messages.getString("prefix", loaded::getMessagePrefix));
             loaded.setMessageThinking(messages.getString("thinking", loaded::getMessageThinking));
             loaded.setMessageCooldown(messages.getString("cooldown", loaded::getMessageCooldown));
-            loaded.setMessageEmptyQuestion(messages.getString("empty-question", loaded::getMessageEmptyQuestion));
+            loaded.setMessageEmptyInput(resolveEmptyInput(messages, loaded.getMessageEmptyInput()));
             loaded.setMessageError(messages.getString("error", loaded::getMessageError));
             loaded.setMessageDisabled(messages.getString("disabled", loaded::getMessageDisabled));
         }
@@ -157,6 +157,25 @@ public final class ConfigManager {
             case "tfidf" -> PluginConfig.RetrievalMode.TFIDF;
             default -> PluginConfig.RetrievalMode.AUTO;
         };
+    }
+
+    private boolean resolveShowPlayerMessages(TomlTable response, boolean defaultValue) {
+        if (response.contains("show-player-messages")) {
+            return response.getBoolean("show-player-messages");
+        }
+        if (response.contains("show-question")) {
+            return response.getBoolean("show-question");
+        }
+        return defaultValue;
+    }
+
+    private String resolveEmptyInput(TomlTable messages, String defaultValue) {
+        String value = messages.getString("empty-input");
+        if (value != null && !value.isBlank()) {
+            return value;
+        }
+        String legacy = messages.getString("empty-question");
+        return legacy != null && !legacy.isBlank() ? legacy : defaultValue;
     }
 
     private PluginConfig.ResponseVisibility parseResponseVisibility(String value, PluginConfig.ResponseVisibility defaultValue) {

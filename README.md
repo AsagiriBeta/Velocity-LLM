@@ -52,9 +52,10 @@ retrieval = "auto"
 
 ```
 @ai 怎么创建领地？
+@ai 那需要多少钱？
 ```
 
-默认同子服所有玩家都能看到 AI 回复（含提问内容），其他子服玩家看不到。可在 `config.toml` 中设置 `response.visibility = "private"` 改为仅提问者可见。
+默认同子服所有玩家都能看到完整对话（玩家消息 + AI 回复），其他子服玩家看不到。可在 `config.toml` 设置 `response.visibility = "private"` 改为仅对话发起者可见。
 
 ## 控制台命令
 

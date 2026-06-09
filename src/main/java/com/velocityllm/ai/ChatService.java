@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public final class ChatService {
 
@@ -41,15 +42,15 @@ public final class ChatService {
         this.logger = logger;
     }
 
-    public void ask(Player player, String question) {
+    public void ask(Player player, String message) {
         PluginConfig config = plugin.getConfigManager().getConfig();
         if (!config.isAiEnabled()) {
             player.sendMessage(MessageUtil.parse(config.getMessageDisabled()));
             return;
         }
 
-        if (question == null || question.isBlank()) {
-            player.sendMessage(MessageUtil.parse(config.getMessageEmptyQuestion()));
+        if (message == null || message.isBlank()) {
+            player.sendMessage(MessageUtil.parse(config.getMessageEmptyInput()));
             return;
         }
 
@@ -57,10 +58,15 @@ public final class ChatService {
             return;
         }
 
+        String trimmed = message.trim();
+        if (config.isShowPlayerMessages()) {
+            deliverPlayerLine(player, config, trimmed);
+        }
+
         player.sendMessage(MessageUtil.parse(config.getMessageThinking()));
 
         plugin.getServer().getScheduler()
-                .buildTask(plugin, () -> processAsync(player, question.trim()))
+                .buildTask(plugin, () -> processAsync(player, trimmed))
                 .schedule();
     }
 
@@ -84,19 +90,19 @@ public final class ChatService {
         return true;
     }
 
-    private void processAsync(Player player, String question) {
+    private void processAsync(Player player, String message) {
         PluginConfig config = plugin.getConfigManager().getConfig();
         UUID playerId = player.getUniqueId();
 
         try {
-            String userContent = buildUserContent(question, config);
+            String userContent = buildUserContent(message, config);
             List<ChatMessage> history = historyManager.toMessages(playerId, config.getMaxHistory());
             String response = aiService.chat(config, history, userContent).join();
             String truncated = TextUtil.truncate(response, config.getMaxResponseLength());
-            historyManager.addExchange(playerId, question, truncated);
+            historyManager.addExchange(playerId, message, truncated);
 
             plugin.getServer().getScheduler()
-                    .buildTask(plugin, () -> sendResponse(player, config, question, truncated))
+                    .buildTask(plugin, () -> deliverAiResponse(player, config, truncated))
                     .schedule();
         } catch (Exception e) {
             logger.error("AI 请求失败: {}", e.getMessage(), e);
@@ -107,17 +113,17 @@ public final class ChatService {
         }
     }
 
-    private String buildUserContent(String question, PluginConfig config) {
+    private String buildUserContent(String message, PluginConfig config) {
         if (!config.isRagEnabled()) {
-            return question;
+            return message;
         }
 
-        List<DocumentChunk> chunks = ragService.retrieve(question);
+        List<DocumentChunk> chunks = ragService.retrieve(message);
         if (chunks.isEmpty()) {
             if (ragService.isEmpty()) {
-                return "【服务器文档】\n（暂无文档）\n\n【玩家问题】\n" + question;
+                return "【服务器文档】\n（暂无文档）\n\n【玩家消息】\n" + message;
             }
-            return question;
+            return message;
         }
 
         StringBuilder builder = new StringBuilder();
@@ -127,28 +133,39 @@ public final class ChatService {
             builder.append("--- 片段 ").append(i + 1).append(" (").append(chunk.getSourceFile()).append(") ---\n");
             builder.append(chunk.getContent()).append("\n\n");
         }
-        builder.append("【玩家问题】\n").append(question);
+        builder.append("【玩家消息】\n").append(message);
         return builder.toString();
     }
 
-    private void sendResponse(Player player, PluginConfig config, String question, String response) {
-        List<Component> messages = buildResponseComponents(player, config, question, response);
+    private void deliverPlayerLine(Player player, PluginConfig config, String message) {
+        String formatted = config.getMessagePrefix()
+                + "<gray><" + escapeMiniMessage(player.getUsername()) + "></gray> "
+                + "<white>" + escapeMiniMessage(message) + "</white>";
+        deliverToAudience(player, config, List.of(MessageUtil.parse(formatted)));
+    }
+
+    private void deliverAiResponse(Player player, PluginConfig config, String response) {
+        List<Component> messages = buildAiResponseComponents(config, response);
+        deliverToAudience(player, config, messages);
+    }
+
+    private void deliverToAudience(Player player, PluginConfig config, List<Component> messages) {
         if (config.getResponseVisibility() == PluginConfig.ResponseVisibility.SAME_SERVER) {
-            broadcastToSameServer(player, messages);
+            forEachSameServerPlayer(player, viewer -> deliverMessages(viewer, messages));
         } else {
             deliverMessages(player, messages);
         }
     }
 
-    private void broadcastToSameServer(Player player, List<Component> messages) {
+    private void forEachSameServerPlayer(Player player, Consumer<Player> action) {
         player.getCurrentServer().ifPresentOrElse(
                 connection -> {
                     RegisteredServer server = connection.getServer();
                     for (Player viewer : server.getPlayersConnected()) {
-                        deliverMessages(viewer, messages);
+                        action.accept(viewer);
                     }
                 },
-                () -> deliverMessages(player, messages)
+                () -> action.accept(player)
         );
     }
 
@@ -158,18 +175,9 @@ public final class ChatService {
         }
     }
 
-    private List<Component> buildResponseComponents(Player player, PluginConfig config, String question, String response) {
+    private List<Component> buildAiResponseComponents(PluginConfig config, String response) {
         List<Component> components = new ArrayList<>();
         String prefix = config.getMessagePrefix();
-
-        if (config.getResponseVisibility() == PluginConfig.ResponseVisibility.SAME_SERVER && config.isShowQuestion()) {
-            String questionLine = prefix
-                    + "<gray><" + escapeMiniMessage(player.getUsername()) + "> 问:</gray> "
-                    + "<white>" + escapeMiniMessage(question) + "</white>";
-            components.add(MessageUtil.parse(questionLine));
-            prefix = "<gray>└</gray> " + config.getMessagePrefix();
-        }
-
         List<String> lines = splitLines(response, 220);
         for (int i = 0; i < lines.size(); i++) {
             String linePrefix = i == 0 ? prefix : "";

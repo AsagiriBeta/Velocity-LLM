@@ -47,12 +47,12 @@ public final class PluginConfig {
     private int maxResponseLength = 500;
     private String systemPrompt = "";
     private ResponseVisibility responseVisibility = ResponseVisibility.SAME_SERVER;
-    private boolean showQuestion = true;
+    private boolean showPlayerMessages = true;
 
     private String messagePrefix = "<gradient:#55aaff:#aa55ff>[AI]</gradient> ";
     private String messageThinking = "<gray>正在思考中，请稍候...</gray>";
-    private String messageCooldown = "<red>提问太频繁，请等待 {seconds} 秒后再试。</red>";
-    private String messageEmptyQuestion = "<red>请输入你的问题。</red>";
+    private String messageCooldown = "<red>对话太频繁，请等待 {seconds} 秒后再试。</red>";
+    private String messageEmptyInput = "<red>请输入你想说的话。</red>";
     private String messageError = "<red>AI 请求失败：{error}</red>";
     private String messageDisabled = "<red>AI 助手当前已禁用。</red>";
 
@@ -248,12 +248,12 @@ public final class PluginConfig {
         this.responseVisibility = responseVisibility;
     }
 
-    public boolean isShowQuestion() {
-        return showQuestion;
+    public boolean isShowPlayerMessages() {
+        return showPlayerMessages;
     }
 
-    public void setShowQuestion(boolean showQuestion) {
-        this.showQuestion = showQuestion;
+    public void setShowPlayerMessages(boolean showPlayerMessages) {
+        this.showPlayerMessages = showPlayerMessages;
     }
 
     public String getMessagePrefix() {
@@ -280,12 +280,12 @@ public final class PluginConfig {
         this.messageCooldown = messageCooldown;
     }
 
-    public String getMessageEmptyQuestion() {
-        return messageEmptyQuestion;
+    public String getMessageEmptyInput() {
+        return messageEmptyInput;
     }
 
-    public void setMessageEmptyQuestion(String messageEmptyQuestion) {
-        this.messageEmptyQuestion = messageEmptyQuestion;
+    public void setMessageEmptyInput(String messageEmptyInput) {
+        this.messageEmptyInput = messageEmptyInput;
     }
 
     public String getMessageError() {
