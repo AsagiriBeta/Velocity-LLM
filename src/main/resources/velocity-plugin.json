@@ -1,0 +1,8 @@
+{
+  "id": "velocity-llm",
+  "name": "Velocity LLM",
+  "version": "${version}",
+  "description": "Velocity AI assistant with RAG support for server guides",
+  "authors": ["Velocity-LLM"],
+  "main": "com.velocityllm.VelocityLLMPlugin"
+}

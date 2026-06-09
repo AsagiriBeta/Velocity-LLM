@@ -1,0 +1,50 @@
+# Velocity LLM 配置文件
+
+[ai]
+enabled = true
+# Ollama 服务地址（不含 /api/chat 路径）
+base-url = "http://127.0.0.1:11434"
+model = "llama3"
+api-key = ""
+# API 风格: ollama | openai
+api-style = "ollama"
+# Ollama 下使用 /api/chat（true）或 /api/generate（false）
+use-chat-api = true
+temperature = 0.7
+timeout-seconds = 120
+
+[chat]
+trigger-enabled = true
+trigger-prefixes = ["@ai", "@bot"]
+cooldown-seconds = 5
+max-history = 3
+
+[rag]
+enabled = true
+docs-folder = "docs"
+max-chunks = 3
+chunk-size = 600
+chunk-overlap = 100
+# 使用 Ollama embedding 模型做语义检索（需 ollama pull nomic-embed-text）
+embedding-enabled = true
+embedding-model = "nomic-embed-text"
+# 检索模式: auto（优先 embedding，失败回退 TF-IDF）| embedding | tfidf
+retrieval = "auto"
+# 相关度阈值（embedding 为余弦相似度，TF-IDF 为相对最高分比例）
+min-score = 0.25
+
+[response]
+max-length = 500
+system-prompt = """你是本 Minecraft 服务器的 AI 向导。请根据提供的【服务器文档】和对话历史回答玩家问题。
+规则：
+1. 优先依据【服务器文档】作答；文档中没有的信息请明确说明"文档中未提及"，不要编造。
+2. 回答简洁清晰，适合游戏内聊天阅读。
+3. 使用简体中文回答。"""
+
+[messages]
+prefix = "<gradient:#55aaff:#aa55ff>[AI]</gradient> "
+thinking = "<gray>正在思考中，请稍候...</gray>"
+cooldown = "<red>提问太频繁，请等待 {seconds} 秒后再试。</red>"
+empty-question = "<red>请输入你的问题。</red>"
+error = "<red>AI 请求失败：{error}</red>"
+disabled = "<red>AI 助手当前已禁用。</red>"
