@@ -1,5 +1,6 @@
 package com.velocityllm.rag;
 
+import com.velocityllm.config.ConfigManager;
 import com.velocityllm.config.PluginConfig;
 import org.slf4j.Logger;
 
@@ -14,18 +15,19 @@ import java.util.stream.Stream;
 public final class DocumentStore {
 
     private final Path dataDirectory;
-    private final PluginConfig config;
+    private final ConfigManager configManager;
     private final Logger logger;
     private final List<DocumentChunk> chunks = new ArrayList<>();
 
-    public DocumentStore(Path dataDirectory, PluginConfig config, Logger logger) {
+    public DocumentStore(Path dataDirectory, ConfigManager configManager, Logger logger) {
         this.dataDirectory = dataDirectory;
-        this.config = config;
+        this.configManager = configManager;
         this.logger = logger;
     }
 
     public int reload() throws IOException {
         chunks.clear();
+        PluginConfig config = configManager.getConfig();
         Path docsDir = dataDirectory.resolve(config.getDocsFolder());
         if (!Files.exists(docsDir)) {
             Files.createDirectories(docsDir);
@@ -49,6 +51,7 @@ public final class DocumentStore {
 
     private void loadFile(Path file) {
         try {
+            PluginConfig config = configManager.getConfig();
             String content = Files.readString(file, StandardCharsets.UTF_8);
             String source = dataDirectory.resolve(config.getDocsFolder()).relativize(file).toString();
             chunks.addAll(TextChunker.chunk(

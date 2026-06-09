@@ -3,8 +3,7 @@ package com.velocityllm;
 import com.google.inject.Inject;
 import com.velocityllm.ai.AIService;
 import com.velocityllm.ai.ChatService;
-import com.velocityllm.command.AskCommand;
-import com.velocityllm.command.VLLMCommand;
+import com.velocityllm.command.ConsoleCommand;
 import com.velocityllm.config.ConfigManager;
 import com.velocityllm.history.ChatHistoryManager;
 import com.velocityllm.listener.ChatListener;
@@ -52,7 +51,7 @@ public final class VelocityLLMPlugin {
             configManager.copyDefaultDocsIfMissing();
 
             chatHistoryManager = new ChatHistoryManager();
-            documentStore = new DocumentStore(dataDirectory, configManager.getConfig(), logger);
+            documentStore = new DocumentStore(dataDirectory, configManager, logger);
             documentStore.reload();
 
             KnowledgeRetriever knowledgeRetriever = new KnowledgeRetriever(documentStore);
@@ -60,8 +59,7 @@ public final class VelocityLLMPlugin {
             chatService = new ChatService(this, aiService, documentStore, knowledgeRetriever, chatHistoryManager, logger);
 
             server.getEventManager().register(this, new ChatListener(this, chatService));
-            server.getCommandManager().register(VLLMCommand.askMeta(this), new AskCommand(chatService));
-            server.getCommandManager().register(VLLMCommand.meta(this), new VLLMCommand(this, chatService));
+            server.getCommandManager().register(ConsoleCommand.meta(this), new ConsoleCommand(this, chatService, logger));
 
             logger.info("Velocity LLM 已启用。文档片段: {}", documentStore.getChunks().size());
         } catch (Exception e) {

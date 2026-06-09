@@ -86,8 +86,6 @@ public final class ConfigManager {
             loaded.setMessageCooldown(messages.getString("cooldown", loaded::getMessageCooldown));
             loaded.setMessageEmptyQuestion(messages.getString("empty-question", loaded::getMessageEmptyQuestion));
             loaded.setMessageError(messages.getString("error", loaded::getMessageError));
-            loaded.setMessageNoDocs(messages.getString("no-docs", loaded::getMessageNoDocs));
-            loaded.setMessageDocsReloaded(messages.getString("docs-reloaded", loaded::getMessageDocsReloaded));
             loaded.setMessageDisabled(messages.getString("disabled", loaded::getMessageDisabled));
         }
 

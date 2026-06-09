@@ -51,8 +51,6 @@ thinking = "<gray>正在思考中，请稍候...</gray>"
 cooldown = "<red>提问太频繁，请等待 {seconds} 秒后再试。</red>"
 empty-question = "<red>请输入你的问题。</red>"
 error = "<red>AI 请求失败：{error}</red>"
-no-docs = "<yellow>提示：尚未加载任何服务器文档，AI 将仅根据通用知识回答。</yellow>"
-docs-reloaded = "<green>已重新加载 {count} 个文档片段。</green>"
 disabled = "<red>AI 助手当前已禁用。</red>"
 
 # Essential-PlayerInfo 跨服聊天兼容说明：

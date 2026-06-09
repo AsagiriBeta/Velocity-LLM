@@ -12,7 +12,6 @@ import net.kyori.adventure.text.Component;
 import com.velocitypowered.api.proxy.Player;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -138,13 +137,6 @@ public final class ChatService {
 
     public int reloadDocs() throws Exception {
         return documentStore.reload();
-    }
-
-    public void notifyNoDocsIfNeeded(Player player) {
-        PluginConfig config = plugin.getConfigManager().getConfig();
-        if (config.isRagEnabled() && documentStore.isEmpty()) {
-            player.sendMessage(MessageUtil.parse(config.getMessageNoDocs()));
-        }
     }
 
     private String escapeMiniMessage(String text) {

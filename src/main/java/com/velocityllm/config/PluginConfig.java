@@ -30,8 +30,6 @@ public final class PluginConfig {
     private String messageCooldown = "<red>提问太频繁，请等待 {seconds} 秒后再试。</red>";
     private String messageEmptyQuestion = "<red>请输入你的问题。</red>";
     private String messageError = "<red>AI 请求失败：{error}</red>";
-    private String messageNoDocs = "<yellow>提示：尚未加载任何服务器文档，AI 将仅根据通用知识回答。</yellow>";
-    private String messageDocsReloaded = "<green>已重新加载 {count} 个文档片段。</green>";
     private String messageDisabled = "<red>AI 助手当前已禁用。</red>";
 
     public boolean isAiEnabled() {
@@ -208,22 +206,6 @@ public final class PluginConfig {
 
     public void setMessageError(String messageError) {
         this.messageError = messageError;
-    }
-
-    public String getMessageNoDocs() {
-        return messageNoDocs;
-    }
-
-    public void setMessageNoDocs(String messageNoDocs) {
-        this.messageNoDocs = messageNoDocs;
-    }
-
-    public String getMessageDocsReloaded() {
-        return messageDocsReloaded;
-    }
-
-    public void setMessageDocsReloaded(String messageDocsReloaded) {
-        this.messageDocsReloaded = messageDocsReloaded;
     }
 
     public String getMessageDisabled() {
