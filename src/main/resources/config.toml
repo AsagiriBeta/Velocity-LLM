@@ -52,8 +52,3 @@ cooldown = "<red>提问太频繁，请等待 {seconds} 秒后再试。</red>"
 empty-question = "<red>请输入你的问题。</red>"
 error = "<red>AI 请求失败：{error}</red>"
 disabled = "<red>AI 助手当前已禁用。</red>"
-
-# Essential-PlayerInfo 跨服聊天兼容说明：
-# 若安装了 Essential-PlayerInfo 且 message.enabled = true，
-# 建议将 Essential-PlayerInfo 的 message.command-to-broadcast 设为 true，
-# 这样只有带 # 前缀的消息才会跨服广播，@ai 提问不会泄露到其他子服。

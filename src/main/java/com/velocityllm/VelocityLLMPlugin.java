@@ -78,4 +78,8 @@ public final class VelocityLLMPlugin {
     public ChatHistoryManager getChatHistoryManager() {
         return chatHistoryManager;
     }
+
+    public Logger getLogger() {
+        return logger;
+    }
 }

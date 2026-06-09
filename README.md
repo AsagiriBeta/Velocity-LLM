@@ -2,7 +2,7 @@
 
 Velocity 群组服 AI 助手插件，支持 Ollama / OpenAI 兼容 API 与 RAG 文档问答。
 
-插件运行在 Velocity 代理端，可接收**任意子服**玩家发送的 `@ai` 聊天消息。参考了 [Ollama-Chat](https://github.com/mcraftbbs/Ollama-Chat) 的核心思路；可与 [Essential-PlayerInfo](https://github.com/AsagiriBeta/Essential-PlayerInfo) 跨服聊天插件配合使用。
+插件运行在 Velocity 代理端，可接收**任意子服**玩家发送的 `@ai` 聊天消息。参考了 [Ollama-Chat](https://github.com/mcraftbbs/Ollama-Chat) 的核心思路，并内置与 Essential-PlayerInfo 等跨服聊天插件的兼容处理。
 
 ## 功能
 
@@ -69,7 +69,7 @@ vllm reload
 @bot 服务器有哪些指令？
 ```
 
-AI 回复仅发送给提问的玩家，不会作为普通聊天广播。
+AI 回复仅发送给提问的玩家，不会作为普通聊天广播。`@ai` 提问也不会被跨服聊天插件广播到其他子服。
 
 ## 控制台命令
 
@@ -78,20 +78,6 @@ AI 回复仅发送给提问的玩家，不会作为普通聊天广播。
 | `vllm reload` | 重新加载 config.toml 与 docs/ 文档 |
 
 仅在 Velocity 控制台可用，玩家无法执行。
-
-## 与 Essential-PlayerInfo 配合
-
-Essential-PlayerInfo 会在 `PlayerChatEvent` 上将聊天广播到其他子服。为避免 `@ai` 提问被跨服广播，建议在 Essential-PlayerInfo 的 `config.toml` 中设置：
-
-```toml
-[message]
-enabled = true
-command-to-broadcast = true
-```
-
-这样只有带 `#` 前缀的消息才会跨服广播。玩家跨服聊天时使用：`# 大家好`。
-
-本插件在 `PlayerChatEvent` 的最早阶段拦截 `@ai` 消息并拒绝其作为普通聊天发送，配合上述配置可避免 AI 提问泄露到其他子服。
 
 ## RAG 工作原理
 
