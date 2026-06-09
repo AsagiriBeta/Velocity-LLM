@@ -1,0 +1,61 @@
+# Velocity LLM 配置文件
+
+[ai]
+# 是否启用 AI 功能
+enabled = true
+# Ollama 或其他兼容 API 地址
+# 使用 /api/chat 时设 messages-format = true
+# 使用 /api/generate 时设 messages-format = false
+api-url = "http://127.0.0.1:11434/api/chat"
+model = "llama3"
+api-key = ""
+messages-format = true
+# 请求超时（秒）
+timeout-seconds = 120
+
+[chat]
+# 是否启用聊天触发（玩家在聊天中输入前缀来提问）
+trigger-enabled = true
+# 触发前缀，消息以此开头时会被发送给 AI
+trigger-prefixes = ["@ai", "@bot"]
+# 每位玩家的提问冷却时间（秒），0 为不限制
+cooldown-seconds = 5
+# 保留的对话历史轮数（用于上下文）
+max-history = 3
+
+[rag]
+# 是否启用 RAG（从本地文档检索服务器玩法信息）
+enabled = true
+# 文档目录（相对于插件数据目录）
+docs-folder = "docs"
+# 每次检索返回的最大文档片段数
+max-chunks = 3
+# 单个文档片段的最大字符数
+chunk-size = 600
+# 片段重叠字符数，有助于保持上下文连贯
+chunk-overlap = 100
+
+[response]
+# AI 回复的最大字符数（超出会截断）
+max-length = 500
+# 系统提示词
+system-prompt = """你是本 Minecraft 服务器的 AI 向导。请根据提供的【服务器文档】和对话历史回答玩家问题。
+规则：
+1. 优先依据【服务器文档】作答；文档中没有的信息请明确说明"文档中未提及"，不要编造。
+2. 回答简洁清晰，适合游戏内聊天阅读。
+3. 使用简体中文回答。"""
+
+[messages]
+prefix = "<gradient:#55aaff:#aa55ff>[AI]</gradient> "
+thinking = "<gray>正在思考中，请稍候...</gray>"
+cooldown = "<red>提问太频繁，请等待 {seconds} 秒后再试。</red>"
+empty-question = "<red>请输入你的问题。</red>"
+error = "<red>AI 请求失败：{error}</red>"
+no-docs = "<yellow>提示：尚未加载任何服务器文档，AI 将仅根据通用知识回答。</yellow>"
+docs-reloaded = "<green>已重新加载 {count} 个文档片段。</green>"
+disabled = "<red>AI 助手当前已禁用。</red>"
+
+# Essential-PlayerInfo 跨服聊天兼容说明：
+# 若安装了 Essential-PlayerInfo 且 message.enabled = true，
+# 建议将 Essential-PlayerInfo 的 message.command-to-broadcast 设为 true，
+# 这样只有带 # 前缀的消息才会跨服广播，@ai 提问不会泄露到其他子服。
