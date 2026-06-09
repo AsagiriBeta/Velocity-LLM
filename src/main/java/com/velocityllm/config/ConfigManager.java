@@ -1,5 +1,6 @@
 package com.velocityllm.config;
 
+import com.velocityllm.ai.OllamaUrls;
 import org.slf4j.Logger;
 import org.tomlj.Toml;
 import org.tomlj.TomlArray;
@@ -12,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public final class ConfigManager {
 
@@ -49,10 +51,12 @@ public final class ConfigManager {
         TomlTable ai = parsed.getTable("ai");
         if (ai != null) {
             loaded.setAiEnabled(ai.getBoolean("enabled", loaded::isAiEnabled));
-            loaded.setApiUrl(ai.getString("api-url", loaded::getApiUrl));
+            loaded.setBaseUrl(resolveBaseUrl(ai, loaded.getBaseUrl()));
             loaded.setModel(ai.getString("model", loaded::getModel));
             loaded.setApiKey(ai.getString("api-key", loaded::getApiKey));
-            loaded.setMessagesFormat(ai.getBoolean("messages-format", loaded::isMessagesFormat));
+            loaded.setApiStyle(parseApiStyle(ai.getString("api-style"), loaded.getApiStyle()));
+            loaded.setUseChatApi(resolveUseChatApi(ai, loaded.isUseChatApi()));
+            loaded.setTemperature(ai.getDouble("temperature", loaded::getTemperature));
             loaded.setTimeoutSeconds((int) ai.getLong("timeout-seconds", loaded::getTimeoutSeconds));
         }
 
@@ -71,6 +75,10 @@ public final class ConfigManager {
             loaded.setMaxChunks((int) rag.getLong("max-chunks", loaded::getMaxChunks));
             loaded.setChunkSize((int) rag.getLong("chunk-size", loaded::getChunkSize));
             loaded.setChunkOverlap((int) rag.getLong("chunk-overlap", loaded::getChunkOverlap));
+            loaded.setEmbeddingEnabled(rag.getBoolean("embedding-enabled", loaded::isEmbeddingEnabled));
+            loaded.setEmbeddingModel(rag.getString("embedding-model", loaded::getEmbeddingModel));
+            loaded.setRetrievalMode(parseRetrievalMode(rag.getString("retrieval"), loaded.getRetrievalMode()));
+            loaded.setMinScore(rag.getDouble("min-score", loaded::getMinScore));
         }
 
         TomlTable response = parsed.getTable("response");
@@ -90,7 +98,63 @@ public final class ConfigManager {
         }
 
         this.config = loaded;
-        logger.info("配置已加载: model={}, rag={}", loaded.getModel(), loaded.isRagEnabled());
+        logger.info("配置已加载: model={}, api={}, rag={}, retrieval={}",
+                loaded.getModel(),
+                loaded.getApiStyle(),
+                loaded.isRagEnabled(),
+                loaded.getRetrievalMode());
+    }
+
+    private String resolveBaseUrl(TomlTable ai, String defaultValue) {
+        String baseUrl = ai.getString("base-url");
+        if (baseUrl != null && !baseUrl.isBlank()) {
+            return OllamaUrls.normalizeBaseUrl(baseUrl);
+        }
+
+        String legacyApiUrl = ai.getString("api-url");
+        if (legacyApiUrl != null && !legacyApiUrl.isBlank()) {
+            return OllamaUrls.normalizeBaseUrl(legacyApiUrl);
+        }
+
+        return defaultValue;
+    }
+
+    private boolean resolveUseChatApi(TomlTable ai, boolean defaultValue) {
+        if (ai.contains("use-chat-api")) {
+            return ai.getBoolean("use-chat-api");
+        }
+
+        if (ai.contains("messages-format")) {
+            return ai.getBoolean("messages-format");
+        }
+
+        String legacyApiUrl = ai.getString("api-url");
+        if (legacyApiUrl != null) {
+            return legacyApiUrl.contains("/api/chat");
+        }
+
+        return defaultValue;
+    }
+
+    private PluginConfig.ApiStyle parseApiStyle(String value, PluginConfig.ApiStyle defaultValue) {
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        return switch (value.toLowerCase(Locale.ROOT)) {
+            case "openai" -> PluginConfig.ApiStyle.OPENAI;
+            default -> PluginConfig.ApiStyle.OLLAMA;
+        };
+    }
+
+    private PluginConfig.RetrievalMode parseRetrievalMode(String value, PluginConfig.RetrievalMode defaultValue) {
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        return switch (value.toLowerCase(Locale.ROOT)) {
+            case "embedding" -> PluginConfig.RetrievalMode.EMBEDDING;
+            case "tfidf" -> PluginConfig.RetrievalMode.TFIDF;
+            default -> PluginConfig.RetrievalMode.AUTO;
+        };
     }
 
     private List<String> readStringList(TomlTable table, String key, List<String> defaultValue) {

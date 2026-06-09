@@ -3,12 +3,12 @@ package com.velocityllm;
 import com.google.inject.Inject;
 import com.velocityllm.ai.AIService;
 import com.velocityllm.ai.ChatService;
+import com.velocityllm.ai.EmbeddingService;
 import com.velocityllm.command.ConsoleCommand;
 import com.velocityllm.config.ConfigManager;
 import com.velocityllm.history.ChatHistoryManager;
 import com.velocityllm.listener.ChatListener;
-import com.velocityllm.rag.DocumentStore;
-import com.velocityllm.rag.KnowledgeRetriever;
+import com.velocityllm.rag.RagService;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
@@ -33,7 +33,7 @@ public final class VelocityLLMPlugin {
 
     private ConfigManager configManager;
     private ChatHistoryManager chatHistoryManager;
-    private DocumentStore documentStore;
+    private RagService ragService;
     private ChatService chatService;
 
     @Inject
@@ -51,17 +51,17 @@ public final class VelocityLLMPlugin {
             configManager.copyDefaultDocsIfMissing();
 
             chatHistoryManager = new ChatHistoryManager();
-            documentStore = new DocumentStore(dataDirectory, configManager, logger);
-            documentStore.reload();
+            EmbeddingService embeddingService = new EmbeddingService(logger);
+            ragService = new RagService(dataDirectory, configManager, embeddingService, logger);
+            ragService.reload();
 
-            KnowledgeRetriever knowledgeRetriever = new KnowledgeRetriever(documentStore);
             AIService aiService = new AIService();
-            chatService = new ChatService(this, aiService, documentStore, knowledgeRetriever, chatHistoryManager, logger);
+            chatService = new ChatService(this, aiService, ragService, chatHistoryManager, logger);
 
             server.getEventManager().register(this, new ChatListener(this, chatService));
             server.getCommandManager().register(ConsoleCommand.meta(this), new ConsoleCommand(this, chatService, logger));
 
-            logger.info("Velocity LLM 已启用。文档片段: {}", documentStore.getChunks().size());
+            logger.info("Velocity LLM 已启用（Velocity 3.5+）。文档片段: {}", ragService.getChunkCount());
         } catch (Exception e) {
             logger.error("Velocity LLM 启动失败", e);
         }

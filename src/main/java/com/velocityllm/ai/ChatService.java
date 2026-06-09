@@ -2,8 +2,7 @@ package com.velocityllm.ai;
 
 import com.velocityllm.config.PluginConfig;
 import com.velocityllm.rag.DocumentChunk;
-import com.velocityllm.rag.DocumentStore;
-import com.velocityllm.rag.KnowledgeRetriever;
+import com.velocityllm.rag.RagService;
 import com.velocityllm.util.MessageUtil;
 import com.velocityllm.util.TextUtil;
 import com.velocityllm.VelocityLLMPlugin;
@@ -12,6 +11,7 @@ import net.kyori.adventure.text.Component;
 import com.velocitypowered.api.proxy.Player;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,8 +21,7 @@ public final class ChatService {
 
     private final VelocityLLMPlugin plugin;
     private final AIService aiService;
-    private final DocumentStore documentStore;
-    private final KnowledgeRetriever knowledgeRetriever;
+    private final RagService ragService;
     private final ChatHistoryManager historyManager;
     private final Logger logger;
     private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
@@ -30,15 +29,13 @@ public final class ChatService {
     public ChatService(
             VelocityLLMPlugin plugin,
             AIService aiService,
-            DocumentStore documentStore,
-            KnowledgeRetriever knowledgeRetriever,
+            RagService ragService,
             ChatHistoryManager historyManager,
             Logger logger
     ) {
         this.plugin = plugin;
         this.aiService = aiService;
-        this.documentStore = documentStore;
-        this.knowledgeRetriever = knowledgeRetriever;
+        this.ragService = ragService;
         this.historyManager = historyManager;
         this.logger = logger;
     }
@@ -91,14 +88,14 @@ public final class ChatService {
         UUID playerId = player.getUniqueId();
 
         try {
-            String prompt = buildPrompt(playerId, question, config);
-            String response = aiService.chat(config, prompt).join();
+            String userContent = buildUserContent(question, config);
+            List<ChatMessage> history = historyManager.toMessages(playerId, config.getMaxHistory());
+            String response = aiService.chat(config, history, userContent).join();
             String truncated = TextUtil.truncate(response, config.getMaxResponseLength());
             historyManager.addExchange(playerId, question, truncated);
 
-            Component message = MessageUtil.parse(config.getMessagePrefix() + "<white>" + escapeMiniMessage(truncated) + "</white>");
             plugin.getServer().getScheduler()
-                    .buildTask(plugin, () -> player.sendMessage(message))
+                    .buildTask(plugin, () -> sendResponse(player, config, truncated))
                     .schedule();
         } catch (Exception e) {
             logger.error("AI 请求失败: {}", e.getMessage(), e);
@@ -109,34 +106,63 @@ public final class ChatService {
         }
     }
 
-    private String buildPrompt(UUID playerId, String question, PluginConfig config) {
-        StringBuilder prompt = new StringBuilder();
+    private String buildUserContent(String question, PluginConfig config) {
+        if (!config.isRagEnabled()) {
+            return question;
+        }
 
-        if (config.isRagEnabled()) {
-            List<DocumentChunk> chunks = knowledgeRetriever.retrieve(question, config.getMaxChunks());
-            if (chunks.isEmpty() && documentStore.isEmpty()) {
-                prompt.append("【服务器文档】\n（暂无文档）\n\n");
-            } else if (!chunks.isEmpty()) {
-                prompt.append("【服务器文档】\n");
-                for (int i = 0; i < chunks.size(); i++) {
-                    DocumentChunk chunk = chunks.get(i);
-                    prompt.append("--- 片段 ").append(i + 1).append(" (").append(chunk.getSourceFile()).append(") ---\n");
-                    prompt.append(chunk.getContent()).append("\n\n");
-                }
+        List<DocumentChunk> chunks = ragService.retrieve(question);
+        if (chunks.isEmpty()) {
+            if (ragService.isEmpty()) {
+                return "【服务器文档】\n（暂无文档）\n\n【玩家问题】\n" + question;
             }
+            return question;
         }
 
-        String history = historyManager.formatHistory(playerId, config.getMaxHistory());
-        if (!history.isBlank()) {
-            prompt.append("【对话历史】\n").append(history).append("\n");
+        StringBuilder builder = new StringBuilder();
+        builder.append("【服务器文档】\n");
+        for (int i = 0; i < chunks.size(); i++) {
+            DocumentChunk chunk = chunks.get(i);
+            builder.append("--- 片段 ").append(i + 1).append(" (").append(chunk.getSourceFile()).append(") ---\n");
+            builder.append(chunk.getContent()).append("\n\n");
         }
-
-        prompt.append("【玩家问题】\n").append(question);
-        return prompt.toString();
+        builder.append("【玩家问题】\n").append(question);
+        return builder.toString();
     }
 
-    public int reloadDocs() throws Exception {
-        return documentStore.reload();
+    private void sendResponse(Player player, PluginConfig config, String response) {
+        List<String> lines = splitLines(response, 220);
+        String prefix = config.getMessagePrefix();
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            String formatted = (i == 0 ? prefix : "") + "<white>" + escapeMiniMessage(line) + "</white>";
+            player.sendMessage(MessageUtil.parse(formatted));
+        }
+    }
+
+    private List<String> splitLines(String text, int maxLineLength) {
+        List<String> lines = new ArrayList<>();
+        if (text == null || text.isBlank()) {
+            return lines;
+        }
+
+        String[] paragraphs = text.split("\\R");
+        for (String paragraph : paragraphs) {
+            String trimmed = paragraph.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            while (trimmed.length() > maxLineLength) {
+                lines.add(trimmed.substring(0, maxLineLength));
+                trimmed = trimmed.substring(maxLineLength);
+            }
+            lines.add(trimmed);
+        }
+        return lines;
+    }
+
+    public int reload() throws Exception {
+        return ragService.reload();
     }
 
     private String escapeMiniMessage(String text) {

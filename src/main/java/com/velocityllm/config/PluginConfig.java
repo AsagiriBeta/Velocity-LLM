@@ -4,11 +4,24 @@ import java.util.List;
 
 public final class PluginConfig {
 
+    public enum ApiStyle {
+        OLLAMA,
+        OPENAI
+    }
+
+    public enum RetrievalMode {
+        AUTO,
+        EMBEDDING,
+        TFIDF
+    }
+
     private boolean aiEnabled = true;
-    private String apiUrl = "http://127.0.0.1:11434/api/chat";
+    private String baseUrl = "http://127.0.0.1:11434";
     private String model = "llama3";
     private String apiKey = "";
-    private boolean messagesFormat = true;
+    private ApiStyle apiStyle = ApiStyle.OLLAMA;
+    private boolean useChatApi = true;
+    private double temperature = 0.7;
     private int timeoutSeconds = 120;
 
     private boolean triggerEnabled = true;
@@ -21,6 +34,10 @@ public final class PluginConfig {
     private int maxChunks = 3;
     private int chunkSize = 600;
     private int chunkOverlap = 100;
+    private boolean embeddingEnabled = true;
+    private String embeddingModel = "nomic-embed-text";
+    private RetrievalMode retrievalMode = RetrievalMode.AUTO;
+    private double minScore = 0.25;
 
     private int maxResponseLength = 500;
     private String systemPrompt = "";
@@ -40,12 +57,12 @@ public final class PluginConfig {
         this.aiEnabled = aiEnabled;
     }
 
-    public String getApiUrl() {
-        return apiUrl;
+    public String getBaseUrl() {
+        return baseUrl;
     }
 
-    public void setApiUrl(String apiUrl) {
-        this.apiUrl = apiUrl;
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
     }
 
     public String getModel() {
@@ -64,12 +81,28 @@ public final class PluginConfig {
         this.apiKey = apiKey;
     }
 
-    public boolean isMessagesFormat() {
-        return messagesFormat;
+    public ApiStyle getApiStyle() {
+        return apiStyle;
     }
 
-    public void setMessagesFormat(boolean messagesFormat) {
-        this.messagesFormat = messagesFormat;
+    public void setApiStyle(ApiStyle apiStyle) {
+        this.apiStyle = apiStyle;
+    }
+
+    public boolean isUseChatApi() {
+        return useChatApi;
+    }
+
+    public void setUseChatApi(boolean useChatApi) {
+        this.useChatApi = useChatApi;
+    }
+
+    public double getTemperature() {
+        return temperature;
+    }
+
+    public void setTemperature(double temperature) {
+        this.temperature = temperature;
     }
 
     public int getTimeoutSeconds() {
@@ -150,6 +183,38 @@ public final class PluginConfig {
 
     public void setChunkOverlap(int chunkOverlap) {
         this.chunkOverlap = chunkOverlap;
+    }
+
+    public boolean isEmbeddingEnabled() {
+        return embeddingEnabled;
+    }
+
+    public void setEmbeddingEnabled(boolean embeddingEnabled) {
+        this.embeddingEnabled = embeddingEnabled;
+    }
+
+    public String getEmbeddingModel() {
+        return embeddingModel;
+    }
+
+    public void setEmbeddingModel(String embeddingModel) {
+        this.embeddingModel = embeddingModel;
+    }
+
+    public RetrievalMode getRetrievalMode() {
+        return retrievalMode;
+    }
+
+    public void setRetrievalMode(RetrievalMode retrievalMode) {
+        this.retrievalMode = retrievalMode;
+    }
+
+    public double getMinScore() {
+        return minScore;
+    }
+
+    public void setMinScore(double minScore) {
+        this.minScore = minScore;
     }
 
     public int getMaxResponseLength() {

@@ -10,17 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class KnowledgeRetriever {
+public final class TfidfRetriever {
 
-    private final DocumentStore documentStore;
-
-    public KnowledgeRetriever(DocumentStore documentStore) {
-        this.documentStore = documentStore;
-    }
-
-    public List<DocumentChunk> retrieve(String query, int topK) {
-        List<DocumentChunk> allChunks = documentStore.getChunks();
-        if (allChunks.isEmpty() || query == null || query.isBlank()) {
+    public List<ScoredChunk> score(String query, List<DocumentChunk> chunks) {
+        if (chunks.isEmpty() || query == null || query.isBlank()) {
             return List.of();
         }
 
@@ -30,16 +23,16 @@ public final class KnowledgeRetriever {
         }
 
         Map<String, Integer> documentFrequency = new HashMap<>();
-        for (DocumentChunk chunk : allChunks) {
+        for (DocumentChunk chunk : chunks) {
             Set<String> unique = new HashSet<>(chunk.getTokens());
             for (String token : unique) {
                 documentFrequency.merge(token, 1, Integer::sum);
             }
         }
 
-        int totalDocuments = allChunks.size();
+        int totalDocuments = chunks.size();
         List<ScoredChunk> scored = new ArrayList<>();
-        for (DocumentChunk chunk : allChunks) {
+        for (DocumentChunk chunk : chunks) {
             double score = scoreChunk(chunk, queryTokens, documentFrequency, totalDocuments);
             if (score > 0) {
                 scored.add(new ScoredChunk(chunk, score));
@@ -47,11 +40,7 @@ public final class KnowledgeRetriever {
         }
 
         scored.sort(Comparator.comparingDouble(ScoredChunk::score).reversed());
-        List<DocumentChunk> result = new ArrayList<>();
-        for (int i = 0; i < Math.min(topK, scored.size()); i++) {
-            result.add(scored.get(i).chunk());
-        }
-        return result;
+        return scored;
     }
 
     private double scoreChunk(
@@ -76,8 +65,5 @@ public final class KnowledgeRetriever {
             score += (1.0 + Math.log(tf)) * idf;
         }
         return score;
-    }
-
-    private record ScoredChunk(DocumentChunk chunk, double score) {
     }
 }

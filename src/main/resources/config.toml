@@ -1,44 +1,40 @@
 # Velocity LLM 配置文件
 
 [ai]
-# 是否启用 AI 功能
 enabled = true
-# Ollama 或其他兼容 API 地址
-# 使用 /api/chat 时设 messages-format = true
-# 使用 /api/generate 时设 messages-format = false
-api-url = "http://127.0.0.1:11434/api/chat"
+# Ollama 服务地址（不含 /api/chat 路径）
+base-url = "http://127.0.0.1:11434"
 model = "llama3"
 api-key = ""
-messages-format = true
-# 请求超时（秒）
+# API 风格: ollama | openai
+api-style = "ollama"
+# Ollama 下使用 /api/chat（true）或 /api/generate（false）
+use-chat-api = true
+temperature = 0.7
 timeout-seconds = 120
 
 [chat]
-# 是否启用聊天触发（玩家在聊天中输入前缀来提问）
 trigger-enabled = true
-# 触发前缀，消息以此开头时会被发送给 AI
 trigger-prefixes = ["@ai", "@bot"]
-# 每位玩家的提问冷却时间（秒），0 为不限制
 cooldown-seconds = 5
-# 保留的对话历史轮数（用于上下文）
 max-history = 3
 
 [rag]
-# 是否启用 RAG（从本地文档检索服务器玩法信息）
 enabled = true
-# 文档目录（相对于插件数据目录）
 docs-folder = "docs"
-# 每次检索返回的最大文档片段数
 max-chunks = 3
-# 单个文档片段的最大字符数
 chunk-size = 600
-# 片段重叠字符数，有助于保持上下文连贯
 chunk-overlap = 100
+# 使用 Ollama embedding 模型做语义检索（需 ollama pull nomic-embed-text）
+embedding-enabled = true
+embedding-model = "nomic-embed-text"
+# 检索模式: auto（优先 embedding，失败回退 TF-IDF）| embedding | tfidf
+retrieval = "auto"
+# 相关度阈值（embedding 为余弦相似度，TF-IDF 为相对最高分比例）
+min-score = 0.25
 
 [response]
-# AI 回复的最大字符数（超出会截断）
 max-length = 500
-# 系统提示词
 system-prompt = """你是本 Minecraft 服务器的 AI 向导。请根据提供的【服务器文档】和对话历史回答玩家问题。
 规则：
 1. 优先依据【服务器文档】作答；文档中没有的信息请明确说明"文档中未提及"，不要编造。

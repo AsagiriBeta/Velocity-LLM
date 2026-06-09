@@ -47,7 +47,7 @@ public final class ConsoleCommand implements SimpleCommand {
     private void handleReload(CommandSource source) {
         try {
             plugin.getConfigManager().load();
-            int count = chatService.reloadDocs();
+            int count = chatService.reload();
             String message = "Velocity LLM 已重新加载，共 " + count + " 个文档片段。";
             logger.info(message);
             source.sendMessage(Component.text(message));

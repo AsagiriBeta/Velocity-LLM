@@ -1,7 +1,11 @@
 package com.velocityllm.history;
 
+import com.velocityllm.ai.ChatMessage;
+
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,10 +19,10 @@ public final class ChatHistoryManager {
                 .addLast(new Exchange(question, answer));
     }
 
-    public String formatHistory(UUID playerId, int maxRounds) {
+    public List<ChatMessage> toMessages(UUID playerId, int maxRounds) {
         Deque<Exchange> history = histories.get(playerId);
         if (history == null || history.isEmpty() || maxRounds <= 0) {
-            return "";
+            return List.of();
         }
 
         ArrayDeque<Exchange> recent = new ArrayDeque<>(history);
@@ -26,12 +30,12 @@ public final class ChatHistoryManager {
             recent.removeFirst();
         }
 
-        StringBuilder builder = new StringBuilder();
+        List<ChatMessage> messages = new ArrayList<>(recent.size() * 2);
         for (Exchange exchange : recent) {
-            builder.append("玩家: ").append(exchange.question()).append('\n');
-            builder.append("AI: ").append(exchange.answer()).append('\n');
+            messages.add(new ChatMessage("user", exchange.question()));
+            messages.add(new ChatMessage("assistant", exchange.answer()));
         }
-        return builder.toString().trim();
+        return messages;
     }
 
     public void clear(UUID playerId) {
