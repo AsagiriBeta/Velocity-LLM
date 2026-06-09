@@ -26,12 +26,9 @@ docs-folder = "docs"
 max-chunks = 3
 chunk-size = 600
 chunk-overlap = 100
-# 使用 Ollama embedding 模型做语义检索（需 ollama pull nomic-embed-text）
-embedding-enabled = true
+# Ollama embedding 模型（需 ollama pull nomic-embed-text）
 embedding-model = "nomic-embed-text"
-# 检索模式: auto（优先 embedding，失败回退 TF-IDF）| embedding | tfidf
-retrieval = "auto"
-# 相关度阈值（embedding 为余弦相似度，TF-IDF 为相对最高分比例）
+# 余弦相似度阈值（0~1）
 min-score = 0.25
 
 [response]

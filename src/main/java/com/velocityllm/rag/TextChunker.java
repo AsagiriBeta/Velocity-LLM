@@ -1,7 +1,5 @@
 package com.velocityllm.rag;
 
-import com.velocityllm.util.TextUtil;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +67,6 @@ public final class TextChunker {
     }
 
     private static void addChunk(List<DocumentChunk> chunks, String sourceFile, String content) {
-        chunks.add(new DocumentChunk(sourceFile, content, TextUtil.tokenize(content)));
+        chunks.add(new DocumentChunk(sourceFile, content));
     }
 }

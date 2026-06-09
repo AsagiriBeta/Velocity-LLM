@@ -75,9 +75,7 @@ public final class ConfigManager {
             loaded.setMaxChunks((int) rag.getLong("max-chunks", loaded::getMaxChunks));
             loaded.setChunkSize((int) rag.getLong("chunk-size", loaded::getChunkSize));
             loaded.setChunkOverlap((int) rag.getLong("chunk-overlap", loaded::getChunkOverlap));
-            loaded.setEmbeddingEnabled(rag.getBoolean("embedding-enabled", loaded::isEmbeddingEnabled));
             loaded.setEmbeddingModel(rag.getString("embedding-model", loaded::getEmbeddingModel));
-            loaded.setRetrievalMode(parseRetrievalMode(rag.getString("retrieval"), loaded.getRetrievalMode()));
             loaded.setMinScore(rag.getDouble("min-score", loaded::getMinScore));
         }
 
@@ -100,11 +98,10 @@ public final class ConfigManager {
         }
 
         this.config = loaded;
-        logger.info("配置已加载: model={}, api={}, rag={}, retrieval={}",
+        logger.info("配置已加载: model={}, api={}, rag={}",
                 loaded.getModel(),
                 loaded.getApiStyle(),
-                loaded.isRagEnabled(),
-                loaded.getRetrievalMode());
+                loaded.isRagEnabled());
     }
 
     private String resolveBaseUrl(TomlTable ai, String defaultValue) {
@@ -145,17 +142,6 @@ public final class ConfigManager {
         return switch (value.toLowerCase(Locale.ROOT)) {
             case "openai" -> PluginConfig.ApiStyle.OPENAI;
             default -> PluginConfig.ApiStyle.OLLAMA;
-        };
-    }
-
-    private PluginConfig.RetrievalMode parseRetrievalMode(String value, PluginConfig.RetrievalMode defaultValue) {
-        if (value == null || value.isBlank()) {
-            return defaultValue;
-        }
-        return switch (value.toLowerCase(Locale.ROOT)) {
-            case "embedding" -> PluginConfig.RetrievalMode.EMBEDDING;
-            case "tfidf" -> PluginConfig.RetrievalMode.TFIDF;
-            default -> PluginConfig.RetrievalMode.AUTO;
         };
     }
 

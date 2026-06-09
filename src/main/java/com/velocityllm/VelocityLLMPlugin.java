@@ -51,7 +51,7 @@ public final class VelocityLLMPlugin {
             configManager.copyDefaultDocsIfMissing();
 
             chatHistoryManager = new ChatHistoryManager();
-            EmbeddingService embeddingService = new EmbeddingService(logger);
+            EmbeddingService embeddingService = new EmbeddingService();
             ragService = new RagService(dataDirectory, configManager, embeddingService, logger);
             ragService.reload();
 

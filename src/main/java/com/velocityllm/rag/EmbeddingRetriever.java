@@ -15,7 +15,7 @@ public final class EmbeddingRetriever {
 
         List<ScoredChunk> scored = new ArrayList<>();
         for (DocumentChunk chunk : chunks) {
-            if (!chunk.hasEmbedding()) {
+            if (chunk.getEmbedding() == null) {
                 continue;
             }
             double similarity = MathUtil.cosineSimilarity(queryEmbedding, chunk.getEmbedding());

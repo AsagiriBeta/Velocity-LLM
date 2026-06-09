@@ -9,12 +9,6 @@ public final class PluginConfig {
         OPENAI
     }
 
-    public enum RetrievalMode {
-        AUTO,
-        EMBEDDING,
-        TFIDF
-    }
-
     public enum ResponseVisibility {
         PRIVATE,
         SAME_SERVER
@@ -39,9 +33,7 @@ public final class PluginConfig {
     private int maxChunks = 3;
     private int chunkSize = 600;
     private int chunkOverlap = 100;
-    private boolean embeddingEnabled = true;
     private String embeddingModel = "nomic-embed-text";
-    private RetrievalMode retrievalMode = RetrievalMode.AUTO;
     private double minScore = 0.25;
 
     private int maxResponseLength = 500;
@@ -192,28 +184,12 @@ public final class PluginConfig {
         this.chunkOverlap = chunkOverlap;
     }
 
-    public boolean isEmbeddingEnabled() {
-        return embeddingEnabled;
-    }
-
-    public void setEmbeddingEnabled(boolean embeddingEnabled) {
-        this.embeddingEnabled = embeddingEnabled;
-    }
-
     public String getEmbeddingModel() {
         return embeddingModel;
     }
 
     public void setEmbeddingModel(String embeddingModel) {
         this.embeddingModel = embeddingModel;
-    }
-
-    public RetrievalMode getRetrievalMode() {
-        return retrievalMode;
-    }
-
-    public void setRetrievalMode(RetrievalMode retrievalMode) {
-        this.retrievalMode = retrievalMode;
     }
 
     public double getMinScore() {
