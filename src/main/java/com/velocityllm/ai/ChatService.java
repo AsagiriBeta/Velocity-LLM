@@ -9,6 +9,7 @@ import com.velocityllm.VelocityLLMPlugin;
 import com.velocityllm.history.ChatHistoryManager;
 import net.kyori.adventure.text.Component;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -95,7 +96,7 @@ public final class ChatService {
             historyManager.addExchange(playerId, question, truncated);
 
             plugin.getServer().getScheduler()
-                    .buildTask(plugin, () -> sendResponse(player, config, truncated))
+                    .buildTask(plugin, () -> sendResponse(player, config, question, truncated))
                     .schedule();
         } catch (Exception e) {
             logger.error("AI 请求失败: {}", e.getMessage(), e);
@@ -130,14 +131,52 @@ public final class ChatService {
         return builder.toString();
     }
 
-    private void sendResponse(Player player, PluginConfig config, String response) {
-        List<String> lines = splitLines(response, 220);
-        String prefix = config.getMessagePrefix();
-        for (int i = 0; i < lines.size(); i++) {
-            String line = lines.get(i);
-            String formatted = (i == 0 ? prefix : "") + "<white>" + escapeMiniMessage(line) + "</white>";
-            player.sendMessage(MessageUtil.parse(formatted));
+    private void sendResponse(Player player, PluginConfig config, String question, String response) {
+        List<Component> messages = buildResponseComponents(player, config, question, response);
+        if (config.getResponseVisibility() == PluginConfig.ResponseVisibility.SAME_SERVER) {
+            broadcastToSameServer(player, messages);
+        } else {
+            deliverMessages(player, messages);
         }
+    }
+
+    private void broadcastToSameServer(Player player, List<Component> messages) {
+        player.getCurrentServer().ifPresentOrElse(
+                connection -> {
+                    RegisteredServer server = connection.getServer();
+                    for (Player viewer : server.getPlayersConnected()) {
+                        deliverMessages(viewer, messages);
+                    }
+                },
+                () -> deliverMessages(player, messages)
+        );
+    }
+
+    private void deliverMessages(Player player, List<Component> messages) {
+        for (Component message : messages) {
+            player.sendMessage(message);
+        }
+    }
+
+    private List<Component> buildResponseComponents(Player player, PluginConfig config, String question, String response) {
+        List<Component> components = new ArrayList<>();
+        String prefix = config.getMessagePrefix();
+
+        if (config.getResponseVisibility() == PluginConfig.ResponseVisibility.SAME_SERVER && config.isShowQuestion()) {
+            String questionLine = prefix
+                    + "<gray><" + escapeMiniMessage(player.getUsername()) + "> 问:</gray> "
+                    + "<white>" + escapeMiniMessage(question) + "</white>";
+            components.add(MessageUtil.parse(questionLine));
+            prefix = "<gray>└</gray> " + config.getMessagePrefix();
+        }
+
+        List<String> lines = splitLines(response, 220);
+        for (int i = 0; i < lines.size(); i++) {
+            String linePrefix = i == 0 ? prefix : "";
+            String formatted = linePrefix + "<white>" + escapeMiniMessage(lines.get(i)) + "</white>";
+            components.add(MessageUtil.parse(formatted));
+        }
+        return components;
     }
 
     private List<String> splitLines(String text, int maxLineLength) {

@@ -85,6 +85,8 @@ public final class ConfigManager {
         if (response != null) {
             loaded.setMaxResponseLength((int) response.getLong("max-length", loaded::getMaxResponseLength));
             loaded.setSystemPrompt(response.getString("system-prompt", loaded::getSystemPrompt));
+            loaded.setResponseVisibility(parseResponseVisibility(response.getString("visibility"), loaded.getResponseVisibility()));
+            loaded.setShowQuestion(response.getBoolean("show-question", loaded::isShowQuestion));
         }
 
         TomlTable messages = parsed.getTable("messages");
@@ -154,6 +156,16 @@ public final class ConfigManager {
             case "embedding" -> PluginConfig.RetrievalMode.EMBEDDING;
             case "tfidf" -> PluginConfig.RetrievalMode.TFIDF;
             default -> PluginConfig.RetrievalMode.AUTO;
+        };
+    }
+
+    private PluginConfig.ResponseVisibility parseResponseVisibility(String value, PluginConfig.ResponseVisibility defaultValue) {
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        return switch (value.toLowerCase(Locale.ROOT)) {
+            case "private" -> PluginConfig.ResponseVisibility.PRIVATE;
+            default -> PluginConfig.ResponseVisibility.SAME_SERVER;
         };
     }
 

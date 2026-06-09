@@ -15,6 +15,11 @@ public final class PluginConfig {
         TFIDF
     }
 
+    public enum ResponseVisibility {
+        PRIVATE,
+        SAME_SERVER
+    }
+
     private boolean aiEnabled = true;
     private String baseUrl = "http://127.0.0.1:11434";
     private String model = "llama3";
@@ -41,6 +46,8 @@ public final class PluginConfig {
 
     private int maxResponseLength = 500;
     private String systemPrompt = "";
+    private ResponseVisibility responseVisibility = ResponseVisibility.SAME_SERVER;
+    private boolean showQuestion = true;
 
     private String messagePrefix = "<gradient:#55aaff:#aa55ff>[AI]</gradient> ";
     private String messageThinking = "<gray>正在思考中，请稍候...</gray>";
@@ -231,6 +238,22 @@ public final class PluginConfig {
 
     public void setSystemPrompt(String systemPrompt) {
         this.systemPrompt = systemPrompt;
+    }
+
+    public ResponseVisibility getResponseVisibility() {
+        return responseVisibility;
+    }
+
+    public void setResponseVisibility(ResponseVisibility responseVisibility) {
+        this.responseVisibility = responseVisibility;
+    }
+
+    public boolean isShowQuestion() {
+        return showQuestion;
+    }
+
+    public void setShowQuestion(boolean showQuestion) {
+        this.showQuestion = showQuestion;
     }
 
     public String getMessagePrefix() {

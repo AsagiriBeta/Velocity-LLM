@@ -35,6 +35,10 @@ min-score = 0.25
 
 [response]
 max-length = 500
+# 回复可见范围: same-server（同子服所有玩家）| private（仅提问者）
+visibility = "same-server"
+# 同子服广播时，是否先显示提问内容
+show-question = true
 system-prompt = """你是本 Minecraft 服务器的 AI 向导。请根据提供的【服务器文档】和对话历史回答玩家问题。
 规则：
 1. 优先依据【服务器文档】作答；文档中没有的信息请明确说明"文档中未提及"，不要编造。
